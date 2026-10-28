@@ -1,30 +1,29 @@
 class Solution {
+    private int ans;
+    private boolean[][][] memo;
+
     public int minCost(int[][] grid) {
-        int m = grid.length, n = grid[0].length;
-        int mx = 0;
-        for (int[] row : grid) {
-            for (int x : row)
-                mx = Math.max(mx, x);
+        int startVal = grid[0][0];
+        ans = Integer.MAX_VALUE;
+        memo = new boolean[grid.length][grid[0].length][1024];
+        dfs(grid, 0, 0, 0, grid.length, grid[0].length);
+        return ans;
+    }
+
+    private void dfs(int[][] grid, int i, int j, int xor, int m, int n) {
+        xor ^= grid[i][j];
+        if (ans == 0)
+            return;
+        if (memo[i][j][xor])
+            return;
+        memo[i][j][xor] = true;
+        if (i == m - 1 && j == n - 1) {
+            ans = Math.min(ans, xor);
+            return;
         }
-        mx = 1 << (Integer.SIZE - Integer.numberOfLeadingZeros(mx));
-        boolean[][][] f = new boolean[m][n][mx];
-        f[0][0][grid[0][0]] = true;
-        for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n; j++) {
-                int x = grid[i][j];
-                if (i > 0 || j > 0) {
-                    for (int k = 0; k < mx; k++) {
-                        if (i > 0 && f[i - 1][j][k ^ x])
-                            f[i][j][k] = true;
-                        if (j > 0 && f[i][j - 1][k ^ x])
-                            f[i][j][k] = true;
-                    }
-                }
-            }
-        }
-        for (int k = 0;; k++) {
-            if (f[m - 1][n - 1][k])
-                return k;
-        }
+        if (i + 1 < m)
+            dfs(grid, i + 1, j, xor, m, n);
+        if (j + 1 < n)
+            dfs(grid, i, j + 1, xor, m, n);
     }
 }
