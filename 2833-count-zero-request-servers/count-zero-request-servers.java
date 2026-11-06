@@ -1,25 +1,24 @@
 class Solution {
     public int[] countServers(int n, int[][] logs, int x, int[] queries) {
         Arrays.sort(logs, (a, b) -> a[1] - b[1]);
-        int m = queries.length;
-        int[][] qs = new int[m][0];
-        for (int i = 0; i < m; ++i) 
-            qs[i] = new int[] {queries[i], i};
-        Arrays.sort(qs, (a, b) -> a[0] - b[0]);
-        Map<Integer, Integer> cnt = new HashMap<>();
-        int[] answer = new int[m];
-        int j = 0, k = 0;
-        for (var q : qs) {
-            int r = q[0], i = q[1];
-            int l = r - x;
-            while (k < logs.length && logs[k][1] <= r) 
-                cnt.merge(logs[k++][0], 1, Integer::sum);
-            while (j < logs.length && logs[j][1] < l) {
-                if (cnt.merge(logs[j][0], -1, Integer::sum) == 0) 
-                    cnt.remove(logs[j][0]);
-                j++;
+        int q = queries.length;
+        Integer[] order = new Integer[q];
+        for (int i = 0; i < q; i++) order[i] = i;
+        Arrays.sort(order, (a, b) -> queries[a] - queries[b]);
+        int[] cnt = new int[n + 1];
+        int active = 0, l = 0, r = 0;
+        int[] answer = new int[q];
+        for (int qi : order) {
+            int time = queries[qi];
+            while (r < logs.length && logs[r][1] <= time) {
+                if (cnt[logs[r][0]]++ == 0) active++;
+                r++;
             }
-            answer[i] = n - cnt.size();
+            while (l < r && logs[l][1] < time - x) {
+                if (--cnt[logs[l][0]] == 0) active--;
+                l++;
+            }
+            answer[qi] = n - active;
         }
         return answer;
     }
