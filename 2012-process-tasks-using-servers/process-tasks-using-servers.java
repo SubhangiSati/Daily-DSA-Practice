@@ -1,39 +1,52 @@
 class Solution {
+    static class Server {
+        int index;
+        int wt;
+
+        Server(int i, int w) {
+            this.index = i;
+            this.wt = w;
+        }
+    }
+
+    static class Usage {
+        int freeTime;
+        Server server;
+
+        Usage(int f, Server s) {
+            this.server = s;
+            this.freeTime = f;
+        }
+    }
+
+    PriorityQueue<Server> pqs = new PriorityQueue<>((a, b) -> {
+        if (a.wt == b.wt)
+            return a.index - b.index;
+        return a.wt - b.wt;
+    });
+    PriorityQueue<Usage> busy = new PriorityQueue<>((a, b) -> a.freeTime - b.freeTime);
+
     public int[] assignTasks(int[] servers, int[] tasks) {
-        int n = servers.length;
-        PriorityQueue<int[]> idle = new PriorityQueue<>((a, b) -> {
-            if (a[0] != b[0]) 
-                return a[0] - b[0];
-            return a[1] - b[1];
-        });
-        PriorityQueue<long[]> busy = new PriorityQueue<>((a, b) -> {
-            if (a[0] != b[0]) 
-                return Long.compare(a[0], b[0]);
-            if (a[1] != b[1]) 
-                return Long.compare(a[1], b[1]);
-            return Long.compare(a[2], b[2]);
-        });
-        for (int i = 0; i < n; i++) 
-            idle.offer(new int[] { servers[i], i });
-        int m = tasks.length;
-        int[] answer = new int[m];
-        for (int j = 0; j < m; ++j) {
-            int t = tasks[j];
-            while (!busy.isEmpty() && busy.peek()[0] <= j) {
-                long[] p = busy.poll();
-                idle.offer(new int[] { (int) p[1], (int) p[2] });
+        for (int i = 0; i < servers.length; i++) 
+            pqs.add(new Server(i, servers[i]));
+        int[] answer = new int[tasks.length];
+        int time = 0;
+        for (int i = 0; i < tasks.length; i++) {
+            while (!busy.isEmpty() && busy.peek().freeTime <= i) 
+                pqs.add(busy.poll().server);
+            if (pqs.isEmpty()) {
+                time = busy.peek().freeTime;
+                while (!busy.isEmpty() && busy.peek().freeTime <= time)
+                    pqs.add(busy.poll().server);
             }
-            if (!idle.isEmpty()) {
-                int i = idle.poll()[1];
-                answer[j] = i;
-                busy.offer(new long[] { (long) j + t, servers[i], i });
-            } else {
-                long[] p = busy.poll();
-                int i = (int) p[2];
-                answer[j] = i;
-                busy.offer(new long[] { p[0] + t, p[1], i });
-            }
+
+            Server server = pqs.poll();
+            answer[i] = server.index;
+            busy.add(new Usage(time + tasks[i], server));
+            if (time == i)
+                time++;
         }
         return answer;
     }
+
 }
